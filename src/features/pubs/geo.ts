@@ -19,6 +19,13 @@ export const EDINBURGH_TIGHT_BOUNDS: Bounds = {
   west: -3.242,
 };
 
+export const EDINBURGH_TIGHT_BOUNDS_MOBILE: Bounds = {
+  north: 55.968,
+  south: 55.944,
+  east: -3.170,
+  west: -3.215,
+};
+
 export const EDINBURGH_CENTRE = {
   latitude: 55.9533,
   longitude: -3.1883,

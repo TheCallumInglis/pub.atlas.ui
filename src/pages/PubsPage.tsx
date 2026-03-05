@@ -6,6 +6,7 @@ import { getPubs } from "../api/pubs";
 import {
   EDINBURGH_CENTRE,
   EDINBURGH_TIGHT_BOUNDS,
+  EDINBURGH_TIGHT_BOUNDS_MOBILE,
   MIN_CLUSTER_POINTS,
   isInsideBounds,
   splitCoordinateOutliers,
@@ -52,6 +53,8 @@ export default function PubsPage() {
   const markersRef = useRef<LeafletLayerGroup | null>(null);
   const viewportKeyRef = useRef<string | null>(null);
   const pubItemRefs = useRef<Record<number, HTMLButtonElement | null>>({});
+
+  const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 480px)").matches;
 
   useEffect(() => {
     let active = true;
@@ -129,7 +132,7 @@ export default function PubsPage() {
   const activePubId = selectedPub?.id ?? null;
 
   const visitedCount = pubs.filter((pub) => pub.visited).length;
-  const bounds = EDINBURGH_TIGHT_BOUNDS;
+  const bounds = isMobile ? EDINBURGH_TIGHT_BOUNDS_MOBILE : EDINBURGH_TIGHT_BOUNDS;
   const viewportKey = useMemo(() => {
     const ids = mappablePubs.map((pub) => pub.id).join(",");
     return [
@@ -255,8 +258,8 @@ export default function PubsPage() {
           [bounds.north, bounds.east],
         ],
         {
-          padding: [56, 56],
-          maxZoom: 14,
+          padding: isMobile ? [2, 2] : [56, 56],
+          maxZoom: isMobile ? 18 : 14,
           animate: false,
         },
       );
