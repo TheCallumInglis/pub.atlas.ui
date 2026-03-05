@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/TheCallumInglis/pub.atlas.ui/compare/v1.2.1...v1.2.2) (2026-03-05)
+
+
+### Bug Fixes
+
+* Adds /env-config.js ([3e631de](https://github.com/TheCallumInglis/pub.atlas.ui/commit/3e631deae681a2681d1c387d8ddb3a68ab3a6d65))
+
 ## [1.2.1](https://github.com/TheCallumInglis/pub.atlas.ui/compare/v1.2.0...v1.2.1) (2026-03-05)
 
 
