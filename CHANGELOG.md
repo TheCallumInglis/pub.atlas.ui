@@ -1,3 +1,10 @@
+## [1.2.3](https://github.com/TheCallumInglis/pub.atlas.ui/compare/v1.2.2...v1.2.3) (2026-03-05)
+
+
+### Bug Fixes
+
+* Mobile layout, Title, Favicon ([306874d](https://github.com/TheCallumInglis/pub.atlas.ui/commit/306874d7db11176edeeb92a907e59521d1152fb1))
+
 ## [1.2.2](https://github.com/TheCallumInglis/pub.atlas.ui/compare/v1.2.1...v1.2.2) (2026-03-05)
 
 
