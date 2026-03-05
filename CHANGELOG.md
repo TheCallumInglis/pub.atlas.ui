@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/TheCallumInglis/pub.atlas.ui/compare/v1.2.0...v1.2.1) (2026-03-05)
+
+
+### Bug Fixes
+
+* Adds VITE_API_URL env to dockerfile ([b1353d2](https://github.com/TheCallumInglis/pub.atlas.ui/commit/b1353d2dd3af2cdd943bc5ad4214c781302cb53d))
+
 # [1.2.0](https://github.com/TheCallumInglis/pub.atlas.ui/compare/v1.1.0...v1.2.0) (2026-03-05)
 
 
