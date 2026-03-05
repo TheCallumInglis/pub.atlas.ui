@@ -3,24 +3,19 @@ import HeroPanel from "../components/pubs/HeroPanel";
 import PubList from "../components/pubs/PubList";
 import SelectedPubCard from "../components/pubs/SelectedPubCard";
 import { getPubs } from "../api/pubs";
+import {
+  EDINBURGH_CENTRE,
+  EDINBURGH_TIGHT_BOUNDS,
+  MIN_CLUSTER_POINTS,
+  isInsideBounds,
+  splitCoordinateOutliers,
+} from "../features/pubs/geo";
 import type { Pub } from "../types/pub";
 import "./PubsPage.css";
 
-type Bounds = {
-  north: number;
-  south: number;
-  east: number;
-  west: number;
-};
-
-type ClusterResult = {
-  inliers: Pub[];
-  outliers: Pub[];
-};
-
 type LeafletMap = {
   remove: () => void;
-  setView: (center: [number, number], zoom: number, options?: { animate?: boolean }) => void;
+  setView: (centre: [number, number], zoom: number, options?: { animate?: boolean }) => void;
   fitBounds: (
     bounds: [[number, number], [number, number]],
     options?: { padding?: [number, number]; maxZoom?: number; animate?: boolean },
@@ -31,180 +26,6 @@ type LeafletLayerGroup = {
   clearLayers: () => void;
   addTo: (map: LeafletMap) => LeafletLayerGroup;
 };
-
-const EDINBURGH_TIGHT_BOUNDS: Bounds = {
-  north: 55.987,
-  south: 55.918,
-  east: -3.102,
-  west: -3.242,
-};
-
-const EDINBURGH_CENTER = {
-  latitude: 55.9533,
-  longitude: -3.1883,
-};
-const EDINBURGH_RADIUS_KM = 24;
-const CLUSTER_NEIGHBOR_RADIUS_KM = 12;
-const CLUSTER_RADIUS_KM = 22;
-const MIN_CLUSTER_POINTS = 4;
-
-function toRadians(value: number): number {
-  return (value * Math.PI) / 180;
-}
-
-function haversineDistanceKm(
-  aLat: number,
-  aLon: number,
-  bLat: number,
-  bLon: number,
-): number {
-  const dLat = toRadians(bLat - aLat);
-  const dLon = toRadians(bLon - aLon);
-  const lat1 = toRadians(aLat);
-  const lat2 = toRadians(bLat);
-
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-
-  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function median(values: number[]): number {
-  const sorted = [...values].sort((a, b) => a - b);
-  const middle = Math.floor(sorted.length / 2);
-
-  if (sorted.length % 2 === 0) {
-    return (sorted[middle - 1] + sorted[middle]) / 2;
-  }
-
-  return sorted[middle];
-}
-
-function splitCoordinateOutliers(pubs: Pub[]): ClusterResult {
-  if (pubs.length < 4) {
-    return { inliers: pubs, outliers: [] };
-  }
-
-  const edinburghInliers = pubs.filter((pub) => {
-    const distance = haversineDistanceKm(
-      Number(pub.latitude),
-      Number(pub.longitude),
-      EDINBURGH_CENTER.latitude,
-      EDINBURGH_CENTER.longitude,
-    );
-    return distance <= EDINBURGH_RADIUS_KM;
-  });
-
-  if (edinburghInliers.length >= MIN_CLUSTER_POINTS) {
-    const inlierIds = new Set(edinburghInliers.map((pub) => pub.id));
-    return {
-      inliers: edinburghInliers,
-      outliers: pubs.filter((pub) => !inlierIds.has(pub.id)),
-    };
-  }
-
-  const centerLat = median(pubs.map((pub) => Number(pub.latitude)));
-  const centerLon = median(pubs.map((pub) => Number(pub.longitude)));
-
-  let bestSeed: Pub | null = null;
-  let bestNeighborCount = 0;
-
-  for (const seed of pubs) {
-    let neighborCount = 0;
-    for (const candidate of pubs) {
-      const distance = haversineDistanceKm(
-        Number(seed.latitude),
-        Number(seed.longitude),
-        Number(candidate.latitude),
-        Number(candidate.longitude),
-      );
-      if (distance <= CLUSTER_NEIGHBOR_RADIUS_KM) {
-        neighborCount += 1;
-      }
-    }
-
-    if (neighborCount > bestNeighborCount) {
-      bestNeighborCount = neighborCount;
-      bestSeed = seed;
-    }
-  }
-
-  if (!bestSeed || bestNeighborCount < MIN_CLUSTER_POINTS) {
-    return { inliers: pubs, outliers: [] };
-  }
-
-  const clusterSeed = bestSeed;
-
-  const seededCluster = pubs.filter((pub) => {
-    const distance = haversineDistanceKm(
-      Number(pub.latitude),
-      Number(pub.longitude),
-      Number(clusterSeed.latitude),
-      Number(clusterSeed.longitude),
-    );
-    return distance <= CLUSTER_RADIUS_KM;
-  });
-
-  if (seededCluster.length < MIN_CLUSTER_POINTS) {
-    return { inliers: pubs, outliers: [] };
-  }
-
-  const refinedCenterLat =
-    seededCluster.reduce((sum, pub) => sum + Number(pub.latitude), 0) /
-    seededCluster.length;
-  const refinedCenterLon =
-    seededCluster.reduce((sum, pub) => sum + Number(pub.longitude), 0) /
-    seededCluster.length;
-
-  const inliers: Pub[] = [];
-  const outliers: Pub[] = [];
-
-  pubs.forEach((pub) => {
-    const distance = haversineDistanceKm(
-      Number(pub.latitude),
-      Number(pub.longitude),
-      refinedCenterLat,
-      refinedCenterLon,
-    );
-
-    if (distance <= CLUSTER_RADIUS_KM) {
-      inliers.push(pub);
-      return;
-    }
-
-    outliers.push(pub);
-  });
-
-  const medianDistanceFromDatasetCenter = haversineDistanceKm(
-    refinedCenterLat,
-    refinedCenterLon,
-    centerLat,
-    centerLon,
-  );
-
-  if (inliers.length < MIN_CLUSTER_POINTS || medianDistanceFromDatasetCenter > 1000) {
-    return {
-      inliers: seededCluster,
-      outliers: pubs.filter((pub) => !seededCluster.includes(pub)),
-    };
-  }
-
-  return { inliers, outliers };
-}
-
-function isInsideBounds(pub: Pub, bounds: Bounds): boolean {
-  if (pub.latitude == null || pub.longitude == null) {
-    return false;
-  }
-
-  return (
-    pub.latitude <= bounds.north &&
-    pub.latitude >= bounds.south &&
-    pub.longitude <= bounds.east &&
-    pub.longitude >= bounds.west
-  );
-}
 
 function getDirectionsUrl(pub: Pub): string {
   if (pub.googleMapsUrl) {
@@ -450,7 +271,7 @@ export default function PubsPage() {
       return;
     }
 
-    map.setView([EDINBURGH_CENTER.latitude, EDINBURGH_CENTER.longitude], 12, {
+    map.setView([EDINBURGH_CENTRE.latitude, EDINBURGH_CENTRE.longitude], 12, {
       animate: false,
     });
   }, [activePubId, bounds, mapReady, mappablePubs, viewportKey]);

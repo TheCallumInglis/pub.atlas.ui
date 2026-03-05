@@ -14,7 +14,7 @@ function toStringOrNull(value: unknown): string | null {
   return typeof value === "string" && value.trim().length > 0 ? value : null;
 }
 
-function normalizePub(raw: Partial<Pub>): Pub {
+function normalisePub(raw: Partial<Pub>): Pub {
   return {
     id: Number(raw.id ?? 0),
     name: String(raw.name ?? "Unnamed Pub"),
@@ -29,5 +29,5 @@ function normalizePub(raw: Partial<Pub>): Pub {
 
 export async function getPubs(): Promise<Pub[]> {
   const res = await api.get<Partial<Pub>[]>("/pubs");
-  return (res.data ?? []).map(normalizePub);
+  return (res.data ?? []).map(normalisePub);
 }

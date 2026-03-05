@@ -4,7 +4,7 @@ declare global {
       map: (element: HTMLElement, options?: Record<string, unknown>) => {
         remove: () => void;
         setView: (
-          center: [number, number],
+          centre: [number, number],
           zoom: number,
           options?: { animate?: boolean },
         ) => void;
