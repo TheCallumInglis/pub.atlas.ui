@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import HeroPanel from "../components/pubs/HeroPanel";
+import PubList from "../components/pubs/PubList";
+import SelectedPubCard from "../components/pubs/SelectedPubCard";
 import { getPubs } from "../api/pubs";
 import type { Pub } from "../types/pub";
 import "./PubsPage.css";
@@ -323,6 +326,10 @@ export default function PubsPage() {
     setListFocusSeq((value) => value + 1);
   };
 
+  const setPubItemRef = (pubId: number, element: HTMLButtonElement | null) => {
+    pubItemRefs.current[pubId] = element;
+  };
+
   useEffect(() => {
     if (!mapElementRef.current || mapRef.current || typeof window === "undefined") {
       return;
@@ -498,24 +505,7 @@ export default function PubsPage() {
       </section>
 
       <section className="overlay">
-        <header className="hero-panel">
-          <p className="eyebrow">Edinburgh</p>
-          <h1>Callum's Pub Atlas</h1>
-          <p className="subtitle">
-            A personal map of pints around Edinburgh.
-          </p>
-
-          <div className="stats-row">
-            <div className="stat-card">
-              <span className="stats-value">{visitedCount}</span>
-              <span className="stats-label">Visited</span>
-            </div>
-            <div className="stat-card">
-              <span className="stats-value">{mappablePubs.length}</span>
-              <span className="stats-label">Mapped</span>
-            </div>
-          </div>
-        </header>
+        <HeroPanel visitedCount={visitedCount} mappedCount={mappablePubs.length} />
 
         <aside className="list-panel" aria-live="polite">
           {loading && <p className="status">Loading pubs...</p>}
@@ -528,45 +518,19 @@ export default function PubsPage() {
           {!loading && !error && pubs.length > 0 && (
             <>
               {selectedPub && (
-                <article className="selected-card">
-                  <p className="selected-card__area">
-                    {selectedPub.area ?? "Edinburgh"}
-                  </p>
-                  <h2>{selectedPub.name}</h2>
-                  <a
-                    href={getDirectionsUrl(selectedPub)}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Open in Google Maps
-                  </a>
-                </article>
+                <SelectedPubCard
+                  pubItem={selectedPub}
+                  directionsUrl={getDirectionsUrl(selectedPub)}
+                />
               )}
 
-              <div className="pub-list" role="list" aria-label="Pubs">
-                {pubs.map((pub, index) => (
-                  <button
-                    type="button"
-                    key={pub.id}
-                    ref={(element) => {
-                      pubItemRefs.current[pub.id] = element;
-                    }}
-                    className={`pub-item${pub.id === activePubId ? " is-active" : ""}`}
-                    style={{ animationDelay: `${Math.min(index * 60, 360)}ms` }}
-                    onClick={() => handleListSelect(pub.id)}
-                    role="listitem"
-                  >
-                    <span>{pub.name}</span>
-                    <small>
-                      {pub.latitude == null || pub.longitude == null
-                        ? "Missing coordinates"
-                        : outlierIds.has(pub.id)
-                          ? "Outside Edinburgh"
-                          : pub.area ?? "Mapped"}
-                    </small>
-                  </button>
-                ))}
-              </div>
+              <PubList
+                pubs={pubs}
+                activePubId={activePubId}
+                outlierIds={outlierIds}
+                onSelect={handleListSelect}
+                setPubItemRef={setPubItemRef}
+              />
             </>
           )}
         </aside>
