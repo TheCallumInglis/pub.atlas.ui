@@ -1,3 +1,10 @@
+## [1.2.4](https://github.com/TheCallumInglis/pub.atlas.ui/compare/v1.2.3...v1.2.4) (2026-03-05)
+
+
+### Bug Fixes
+
+* Tight bounds on mobile ([b0dad80](https://github.com/TheCallumInglis/pub.atlas.ui/commit/b0dad80797eedb68343822deac8b5181bc71b597))
+
 ## [1.2.3](https://github.com/TheCallumInglis/pub.atlas.ui/compare/v1.2.2...v1.2.3) (2026-03-05)
 
 
